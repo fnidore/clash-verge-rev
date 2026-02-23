@@ -14,6 +14,7 @@ export const SWR_DEFAULTS = {
   suspense: false,
   errorRetryCount: 2,
   dedupingInterval: 5000,
+  errorRetryInterval: 5000,
 } as const;
 
 export const SWR_SLOW_POLL = {
