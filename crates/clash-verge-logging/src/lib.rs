@@ -127,3 +127,90 @@ impl<'a> LogLineFilter for NoModuleFilter<'a> {
         writer.write(now, record)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use log::{Level, Record};
+
+    #[test]
+    fn test_no_module_filter() {
+        let filter = NoModuleFilter(vec!["my_module::secret", "other_module"]);
+
+        // Test matching module
+        assert!(!filter.filter(
+            &Record::builder()
+                .module_path(Some("my_module::secret"))
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+
+        // Test matching sub-module
+        assert!(!filter.filter(
+            &Record::builder()
+                .module_path(Some("my_module::secret::sub"))
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+
+        // Test non-matching module
+        assert!(filter.filter(
+            &Record::builder()
+                .module_path(Some("my_module::public"))
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+
+        // Test other matching module
+        assert!(!filter.filter(
+            &Record::builder()
+                .module_path(Some("other_module"))
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+
+        // Test None module path
+        assert!(filter.filter(
+            &Record::builder()
+                .module_path(None)
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+
+        // Test partial match (shorter than blocked)
+        assert!(filter.filter(
+            &Record::builder()
+                .module_path(Some("my_module"))
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+
+        // Test partial prefix (starts with but not followed by ::)
+        // Note: The current implementation blocks any module starting with the blocked string.
+        assert!(!filter.filter(
+            &Record::builder()
+                .module_path(Some("my_module::secret_extra"))
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+    }
+
+    #[test]
+    fn test_no_module_filter_empty() {
+        let filter = NoModuleFilter(vec![]);
+        assert!(filter.filter(
+            &Record::builder()
+                .module_path(Some("any_module"))
+                .level(Level::Info)
+                .args(format_args!("test"))
+                .build()
+        ));
+    }
+}
