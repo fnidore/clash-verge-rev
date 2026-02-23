@@ -101,14 +101,19 @@ pub async fn list_wevdav_backup() -> Result<Vec<ListFile>> {
 
 /// Delete WebDAV backup
 pub async fn delete_webdav_backup(filename: String) -> Result<()> {
-    backup::WebDavClient::global().delete(filename).await.map_err(|err| {
-        logging!(error, Type::Backup, "Failed to delete WebDAV backup file: {err:#?}");
-        err
-    })
+    let filename = help::get_safe_filename(&filename)?;
+    backup::WebDavClient::global()
+        .delete(filename.into())
+        .await
+        .map_err(|err| {
+            logging!(error, Type::Backup, "Failed to delete WebDAV backup file: {err:#?}");
+            err
+        })
 }
 
 /// Restore WebDAV backup
 pub async fn restore_webdav_backup(filename: String) -> Result<()> {
+    let filename = help::get_safe_filename(&filename)?;
     let verge = Config::verge().await;
     let verge_data = verge.latest_arc();
     let webdav_url = verge_data.webdav_url.clone();
@@ -117,9 +122,9 @@ pub async fn restore_webdav_backup(filename: String) -> Result<()> {
 
     let backup_storage_path = app_home_dir()
         .map_err(|e| anyhow::anyhow!("Failed to get app home dir: {e}"))?
-        .join(filename.as_str());
+        .join(&filename);
     backup::WebDavClient::global()
-        .download(filename, backup_storage_path.clone())
+        .download(filename.into(), backup_storage_path.clone())
         .await
         .map_err(|err| {
             logging!(error, Type::Backup, "Failed to download WebDAV backup file: {err:#?}");
@@ -283,8 +288,9 @@ pub async fn list_local_backup() -> Result<Vec<LocalBackupFile>> {
 
 /// Delete local backup
 pub async fn delete_local_backup(filename: String) -> Result<()> {
+    let filename = help::get_safe_filename(&filename)?;
     let backup_dir = local_backup_dir()?;
-    let target_path = backup_dir.join(filename.as_str());
+    let target_path = backup_dir.join(&filename);
     if !target_path.exists() {
         logging!(warn, Type::Backup, "Local backup file not found: {}", filename);
         return Ok(());
@@ -295,8 +301,9 @@ pub async fn delete_local_backup(filename: String) -> Result<()> {
 
 /// Restore local backup
 pub async fn restore_local_backup(filename: String) -> Result<()> {
+    let filename = help::get_safe_filename(&filename)?;
     let backup_dir = local_backup_dir()?;
-    let target_path = backup_dir.join(filename.as_str());
+    let target_path = backup_dir.join(&filename);
     if !target_path.exists() {
         return Err(anyhow!("Backup file not found: {}", filename));
     }
@@ -320,8 +327,9 @@ pub async fn restore_local_backup(filename: String) -> Result<()> {
 
 /// Export local backup file to user selected destination
 pub async fn export_local_backup(filename: String, destination: String) -> Result<()> {
+    let filename = help::get_safe_filename(&filename)?;
     let backup_dir = local_backup_dir()?;
-    let source_path = backup_dir.join(filename.as_str());
+    let source_path = backup_dir.join(&filename);
     if !source_path.exists() {
         return Err(anyhow!("Backup file not found: {}", filename));
     }
