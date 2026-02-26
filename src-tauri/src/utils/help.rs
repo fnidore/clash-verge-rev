@@ -156,10 +156,7 @@ mod tests {
     #[test]
     fn test_get_safe_filename() -> Result<()> {
         assert_eq!(get_safe_filename("backup.zip")?, "backup.zip");
-        assert_eq!(
-            get_safe_filename("linux-backup-2024.zip")?,
-            "linux-backup-2024.zip"
-        );
+        assert_eq!(get_safe_filename("linux-backup-2024.zip")?, "linux-backup-2024.zip");
 
         assert!(get_safe_filename("").is_err());
         assert!(get_safe_filename("..").is_err());
