@@ -305,10 +305,7 @@ fn run_command_with_timeout(mut cmd: StdCommand, timeout_secs: u64) -> Result<st
                 pid
             );
 
-            let _ = StdCommand::new("kill")
-                .arg("-9")
-                .arg(pid.to_string())
-                .output();
+            let _ = StdCommand::new("kill").arg("-9").arg(pid.to_string()).output();
 
             bail!("Command timed out after {} seconds", timeout_secs);
         }
