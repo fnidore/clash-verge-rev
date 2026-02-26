@@ -421,7 +421,7 @@ pub(super) async fn stop_core_by_service() -> Result<()> {
 
 /// 检查服务是否正在运行
 pub async fn is_service_available() -> Result<()> {
-    if let Err(e) = fs::metadata(clash_verge_service_ipc::IPC_PATH.as_ref()).await {
+    if let Err(e) = fs::metadata(Path::new(clash_verge_service_ipc::IPC_PATH)).await {
         let verge = Config::verge().await;
         let verge_last = verge.latest_arc();
         let is_enable = verge_last.enable_tun_mode.unwrap_or(false);
@@ -446,7 +446,7 @@ async fn wait_for_service_ipc(status: &mut ServiceManager, reason: &str) -> Resu
     let mut last_err = anyhow!("service not ready");
 
     loop {
-        if fs::try_exists(clash_verge_service_ipc::IPC_PATH.as_ref())
+        if fs::try_exists(Path::new(clash_verge_service_ipc::IPC_PATH))
             .await
             .unwrap_or(false)
         {
@@ -472,7 +472,7 @@ async fn wait_for_service_ipc(status: &mut ServiceManager, reason: &str) -> Resu
 }
 
 pub async fn is_service_ipc_path_exists() -> bool {
-    fs::try_exists(clash_verge_service_ipc::IPC_PATH.as_ref())
+    fs::try_exists(Path::new(clash_verge_service_ipc::IPC_PATH))
         .await
         .unwrap_or(false)
 }
