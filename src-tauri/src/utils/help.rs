@@ -109,6 +109,20 @@ pub fn get_last_part_and_decode(url: &str) -> Option<String> {
     )
 }
 
+/// ensure the filename is a single normal component
+pub fn get_safe_filename(filename: &str) -> Result<String> {
+    if filename.is_empty() {
+        bail!("filename is empty");
+    }
+    let path = std::path::Path::new(filename);
+    let components: Vec<_> = path.components().collect();
+
+    match components.as_slice() {
+        [std::path::Component::Normal(name)] => Ok(name.to_string_lossy().to_string()),
+        _ => bail!("invalid filename: {}", filename),
+    }
+}
+
 /// open file
 pub fn open_file(path: PathBuf) -> Result<()> {
     open::that_detached(path.as_os_str())?;
@@ -132,5 +146,34 @@ pub fn linux_elevator() -> String {
             }
         }
         Err(_) => "sudo".to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_safe_filename() -> Result<()> {
+        assert_eq!(get_safe_filename("backup.zip")?, "backup.zip");
+        assert_eq!(
+            get_safe_filename("linux-backup-2024.zip")?,
+            "linux-backup-2024.zip"
+        );
+
+        assert!(get_safe_filename("").is_err());
+        assert!(get_safe_filename("..").is_err());
+        assert!(get_safe_filename("../etc/passwd").is_err());
+        assert!(get_safe_filename("../../etc/passwd").is_err());
+        assert!(get_safe_filename("/etc/passwd").is_err());
+        assert!(get_safe_filename("dir/file.zip").is_err());
+
+        #[cfg(windows)]
+        {
+            assert!(get_safe_filename("C:\\windows\\system32\\config").is_err());
+            assert!(get_safe_filename("dir\\file.zip").is_err());
+        }
+
+        Ok(())
     }
 }
