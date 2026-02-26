@@ -116,38 +116,10 @@ pub fn get_safe_filename(filename: &str) -> Result<String> {
     }
     let path = std::path::Path::new(filename);
     let components: Vec<_> = path.components().collect();
-    if components.len() == 1 {
-        if let Some(std::path::Component::Normal(name)) = components.first() {
-            return Ok(name.to_string_lossy().to_string());
-        }
-    }
-    bail!("invalid filename: {}", filename)
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_safe_filename() {
-        assert_eq!(get_safe_filename("backup.zip").unwrap(), "backup.zip");
-        assert_eq!(
-            get_safe_filename("linux-backup-2024.zip").unwrap(),
-            "linux-backup-2024.zip"
-        );
-
-        assert!(get_safe_filename("").is_err());
-        assert!(get_safe_filename("..").is_err());
-        assert!(get_safe_filename("../etc/passwd").is_err());
-        assert!(get_safe_filename("../../etc/passwd").is_err());
-        assert!(get_safe_filename("/etc/passwd").is_err());
-        assert!(get_safe_filename("dir/file.zip").is_err());
-
-        #[cfg(windows)]
-        {
-            assert!(get_safe_filename("C:\\windows\\system32\\config").is_err());
-            assert!(get_safe_filename("dir\\file.zip").is_err());
-        }
+    match components.as_slice() {
+        [std::path::Component::Normal(name)] => Ok(name.to_string_lossy().to_string()),
+        _ => bail!("invalid filename: {}", filename),
     }
 }
 
@@ -174,5 +146,34 @@ pub fn linux_elevator() -> String {
             }
         }
         Err(_) => "sudo".to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_safe_filename() -> Result<()> {
+        assert_eq!(get_safe_filename("backup.zip")?, "backup.zip");
+        assert_eq!(
+            get_safe_filename("linux-backup-2024.zip")?,
+            "linux-backup-2024.zip"
+        );
+
+        assert!(get_safe_filename("").is_err());
+        assert!(get_safe_filename("..").is_err());
+        assert!(get_safe_filename("../etc/passwd").is_err());
+        assert!(get_safe_filename("../../etc/passwd").is_err());
+        assert!(get_safe_filename("/etc/passwd").is_err());
+        assert!(get_safe_filename("dir/file.zip").is_err());
+
+        #[cfg(windows)]
+        {
+            assert!(get_safe_filename("C:\\windows\\system32\\config").is_err());
+            assert!(get_safe_filename("dir\\file.zip").is_err());
+        }
+
+        Ok(())
     }
 }
