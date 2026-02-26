@@ -409,7 +409,7 @@ pub fn run() {
                 // 同步设置退出标志，避免重复退出
                 handle::Handle::global().set_is_exiting();
                 // 在后台执行清理，不阻塞事件循环
-                std::thread::spawn(|| {
+                let handle = std::thread::spawn(|| {
                     let rt = tokio::runtime::Builder::new_current_thread().enable_all().build();
                     if let Ok(rt) = rt {
                         rt.block_on(async {
@@ -417,6 +417,7 @@ pub fn run() {
                         });
                     }
                 });
+                let _ = handle.join();
             }
         }
         tauri::RunEvent::ExitRequested { api, code, .. } => {

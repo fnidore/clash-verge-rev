@@ -279,7 +279,7 @@ fn run_command_with_timeout(mut cmd: StdCommand, timeout_secs: u64) -> Result<st
     // 设置非阻塞的 stdin，避免等待输入
     cmd.stdin(Stdio::null());
 
-    let mut child = cmd.spawn()?;
+    let child = cmd.spawn()?;
     let pid = child.id();
 
     // 在单独的线程中等待进程完成
