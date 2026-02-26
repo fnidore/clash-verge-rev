@@ -41,6 +41,7 @@ import { WindowControls } from "@/components/layout/window-controller";
 import { useI18n } from "@/hooks/use-i18n";
 import { useVerge } from "@/hooks/use-verge";
 import { useWindowDecorations } from "@/hooks/use-window";
+import { SWR_DEFAULTS } from "@/services/config";
 import { useThemeMode } from "@/services/states";
 import getSystem from "@/utils/get-system";
 
@@ -256,9 +257,8 @@ const Layout = () => {
   return (
     <SWRConfig
       value={{
+        ...SWR_DEFAULTS,
         errorRetryCount: 3,
-        // TODO remove the 5000ms
-        errorRetryInterval: 5000,
         onError: (error, key) => {
           // FIXME the condition should not be handle gllobally
           if (key !== "getAutotemProxy") {
